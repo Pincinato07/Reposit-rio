@@ -1,0 +1,21 @@
+@import url('./variables.css');
+
+.menu ul {
+  display: flex;
+  gap: var(--espacamento-pequeno);
+  justify-content: center;
+  margin: var(--espacamento-medio);
+}
+
+.menu a {
+  display: block;
+  background: var(--cor-secundaria);
+  color: var(--cor-texto);
+  padding: var(--espacamento-pequeno) var(--espacamento-medio);
+  border-radius: var(--borda-radius);
+  text-transform: uppercase;
+}
+
+.menu a:hover {
+  border-color: var(--cor-destaque);
+}

@@ -1,0 +1,8 @@
+@import url('./variables.css');
+
+.rodape {
+  width: 100%;
+  text-align: center;
+  padding: var(--espacamento-grande);
+  box-sizing: border-box;
+}

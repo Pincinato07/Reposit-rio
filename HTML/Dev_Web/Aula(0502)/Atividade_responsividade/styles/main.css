@@ -1,0 +1,46 @@
+@import url('./variables.css');
+
+.conteudo {
+  display: flex;
+  max-width: 62.5rem;
+  background: var(--cor-primaria);
+  padding: var(--espacamento-medio);
+  gap: var(--espacamento-medio);
+  margin: var(--espacamento-pequeno) auto;
+  align-items: center;
+  border-radius: var(--borda-radius);
+}
+
+.introducao h2 {
+  font-size: 4rem;
+}
+
+.introducao p {
+  margin: var(--espacamento-medio) 0;
+  max-width: 68ch;
+}
+
+.botao {
+  background: var(--cor-destaque);
+  color: #302300;
+  padding: var(--espacamento-pequeno) var(--espacamento-medio);
+  border-radius: var(--borda-radius);
+  text-transform: uppercase;
+}
+
+.botao:hover {
+  background: #900;
+}
+
+.introducao-img {
+  display: flex;
+  gap: var(--espacamento-pequeno);
+  border-radius: 10px;
+  align-items: center;
+  background-color: var(--cor-primaria);
+  padding: var(--espacamento-pequeno);
+}
+
+.introducao-img img {
+  height: 25rem;
+}

@@ -1,0 +1,18 @@
+:root {
+    --cor-primaria: #111;
+    --cor-secundaria: #222;
+    --cor-destaque: #ffbb00;
+    --cor-texto: #fff;
+    --cor-texto-secundario: #b2b2b2;
+  
+    --fonte-padrao: Arial, Helvetica, sans-serif;
+    --tamanho-texto: 1.25rem;
+    --tamanho-titulo: 2rem;
+  
+    --espacamento-pequeno: 1rem;
+    --espacamento-medio: 2rem;
+    --espacamento-grande: 4rem;
+  
+    --borda-radius: 4px;
+  }
+  

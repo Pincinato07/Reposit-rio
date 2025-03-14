@@ -1,0 +1,38 @@
+@import url('./variables.css');
+
+.vantagens {
+  display: flex;
+  gap: var(--espacamento-medio);
+  max-width: 62.5rem;
+  flex-wrap: nowrap;
+  margin: var(--espacamento-pequeno) auto;
+  align-items: center;
+}
+
+.vantagens-titulo {
+  white-space: nowrap;
+  font-size: 3rem;
+  letter-spacing: 2px;
+  color: var(--cor-destaque);
+}
+
+.vantagens-lista {
+  padding: var(--espacamento-pequeno);
+}
+
+.vantagens-lista li {
+  margin: var(--espacamento-pequeno) 0;
+  background-color: var(--cor-primaria);
+  padding: var(--espacamento-medio);
+  border-radius: var(--borda-radius);
+}
+
+.vantagens h3 {
+  margin: 10px 0;
+  font-size: 1.4rem;
+}
+
+.red {
+  color: var(--cor-destaque);
+  font-size: 2rem;
+}

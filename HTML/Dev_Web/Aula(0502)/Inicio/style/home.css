@@ -1,0 +1,10 @@
+.home {
+    color: var(--secondary-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    flex-direction: column  ;
+    font-size: 50px;
+    height: 90vh;
+}
