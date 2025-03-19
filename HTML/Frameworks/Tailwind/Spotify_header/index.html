@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Header</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body>
+    <header class="bg-black text-white p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 md:ml-40">
+                <img src="./img/icons8-spotify-500.png" alt="Spotify Logo" class="w-11 h-11">
+                <span class="text-2xl font-bold">Spotify</span>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-4 mr-40">
+                <a href="#" class="text-white">Premium</a>
+                <a href="#" class="text-white">Suporte</a>
+                <a href="#" class="text-white">Baixar</a>
+                <span class="text-gray-400">|</span>
+                <a href="#" class="text-white">Inscreva-se</a>
+                <a href="#" class="text-white">Entrar</a>
+            </nav>
+
+            <button onclick="document.querySelector('#mobile-menu').showModal()" class="md:hidden text-2xl text-white">
+                ☰
+            </button>
+        </div>
+
+        <dialog id="mobile-menu" class="md:hidden bg-black text-white p-4 absolute top-0 left-0 w-64 h-auto">
+            <form method="dialog">
+                <button class="absolute top-[-2px] right-3">x</button>
+            </form>
+            <nav class="flex flex-col gap-4 mt-8">
+                <a href="#" class="text-white">Premium</a>
+                <a href="#" class="text-white">Suporte</a>
+                <a href="#" class="text-white">Baixar</a>
+                <a href="#" class="w-full bg-white text-black text-center p-2 rounded-full">Inscreva-se</a>
+                <a href="#" class="w-full bg-green-500 text-black text-center p-2 rounded-full">Entrar</a>
+            </nav>
+        </dialog>
+    </header>
+</body>
+</html>
