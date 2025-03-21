@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Tower Defense: Era Steampunk Mágica</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Copperplate', 'Papyrus', sans-serif;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            border: 3px solid #4A2C2A;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        #menu, #campaignMenu, #pauseMenu, #phaseCompleteMenu, #shopMenu, #settingsMenu, #tutorialMenu {
+            position: absolute;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(135deg, #4A2C2A, #8B5A2B);
+            padding: 40px;
+            border-radius: 20px;
+            border: 5px solid #3C2F2F;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8);
+            color: #FFD700;
+            text-align: center;
+            transition: opacity 0.5s ease;
+        }
+        #menu h1, #campaignMenu h1, #pauseMenu h1, #phaseCompleteMenu h1, #shopMenu h1, #settingsMenu h1, #tutorialMenu h1 {
+            font-size: 56px;
+            text-shadow: 3px 3px 5px #000;
+            margin-bottom: 30px;
+        }
+        button {
+            display: block;
+            margin: 15px auto;
+            padding: 15px 30px;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #8B5A2B, #3C2F2F);
+            color: #FFD700;
+            border: 3px solid #3C2F2F;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.5s;
+            text-shadow: 1px 1px 2px #000;
+        }
+        button:hover {
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #3C2F2F, #8B5A2B);
+            transform: scale(1.1);
+        }
+        #campaignMenu button {
+            display: inline-block;
+            margin: 10px;
+            width: 150px;
+        }
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            color: #FFD700;
+            display: none;
+            text-shadow: 1px 1px 2px #000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #ui p {
+            margin: 0 15px;
+        }
+        #towerPanel {
+            position: absolute;
+            right: 0;
+            top: 80px;
+            width: 200px;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border-left: 3px solid #3C2F2F;
+            color: #FFD700;
+            display: none;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #towerButtons button {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #3498db, #2980b9);
+        }
+        #towerButtons button:hover {
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #2980b9, #3498db);
+        }
+        #abilityPanel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            display: none;
+            text-align: center;
+        }
+        #abilityButtons button {
+            display: inline-block;
+            margin: 0 10px;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #ff4444, #cc0000);
+        }
+        #abilityButtons button:hover {
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #cc0000, #ff4444);
+        }
+        #prepTimer {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px #000;
+            display: none;
+        }
+        #tutorialOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: #FFD700;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px #000;
+        }
+        #tutorialOverlay button {
+            margin-top: 20px;
+        }
+        #tutorialArrow {
+            position: absolute;
+            display: none;
+            color: #FFD700;
+            font-size: 40px;
+            text-shadow: 2px 2px 4px #000;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        #backgroundCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        #tooltip {
+            position: absolute;
+            background: url('https://www.transparenttextures.com/patterns/metal.png'), rgba(0, 0, 0, 0.9);
+            color: #FFD700;
+            padding: 10px;
+            border-radius: 5px;
+            border: 2px solid #3C2F2F;
+            font-size: 16px;
+            display: none;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="backgroundCanvas" width="1280" height="720"></canvas>
+    <div id="menu">
+        <h1>Era Steampunk Mágica</h1>
+        <button onclick="showCampaignMenu()">Campanha</button>
+        <button onclick="startInfinite()">Modo Infinito</button>
+        <button onclick="showShopMenu()">Loja</button>
+        <button onclick="showSettingsMenu()">Configurações</button>
+        <button onclick="window.close()">Sair</button>
+    </div>
+    <div id="campaignMenu" style="display: none;">
+        <h1>Escolha uma Fase</h1>
+        <button onclick="startCampaign(1)">Fase 1</button>
+        <button onclick="startCampaign(2)">Fase 2</button>
+        <button onclick="startCampaign(3)">Fase 3</button>
+        <button onclick="startCampaign(4)">Fase 4</button>
+        <button onclick="startCampaign(5)">Fase 5</button>
+        <button onclick="startCampaign(6)">Fase 6</button>
+        <button onclick="startCampaign(7)">Fase 7</button>
+        <button onclick="startCampaign(8)">Fase 8</button>
+        <button onclick="startCampaign(9)">Fase 9</button>
+        <button onclick="startCampaign(10)">Fase 10</button>
+        <button onclick="showMainMenu()">Voltar</button>
+    </div>
+    <div id="pauseMenu" style="display: none;">
+        <h1>Jogo Pausado</h1>
+        <button onclick="resumeGame()">Continuar</button>
+        <button onclick="resetToMenu()">Voltar ao Menu</button>
+    </div>
+    <div id="phaseCompleteMenu" style="display: none;">
+        <h1>Parabéns! Fase <span id="completedPhase">1</span> Concluída!</h1>
+        <button onclick="goToNextPhase()">Próxima Fase</button>
+        <button onclick="resetToMenu()">Menu Inicial</button>
+    </div>
+    <div id="shopMenu" style="display: none;">
+        <h1>Loja do Ferreiro</h1>
+        <p>Gemas: <span id="gems">100</span> | Cristais Mágicos: <span id="crystals">0</span></p>
+        <button onclick="buyGems()">Comprar Gemas (10 por $1)</button>
+        <button onclick="buyTowerSkin('steampunk')">Skin Steampunk (50 gemas)</button>
+        <button onclick="buyAbility('heal')">Cura da Base (100 gemas)</button>
+        <button onclick="showMainMenu()">Voltar</button>
+    </div>
+    <div id="settingsMenu" style="display: none;">
+        <h1>Configurações</h1>
+        <button onclick="toggleSound()">Som: <span id="soundStatus">Ligado</span></button>
+        <button onclick="toggleDifficulty()">Dificuldade: <span id="difficultyStatus">Normal</span></button>
+        <button onclick="showMainMenu()">Voltar</button>
+    </div>
+    <div id="tutorialOverlay" style="display: none;">
+        <p id="tutorialText">Bem-vindo! Vamos aprender a jogar!</p>
+        <button onclick="nextTutorialStep()">Próximo</button>
+    </div>
+    <div id="tutorialArrow">⬆</div>
+    <div id="tooltip"></div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="ui">
+        <p>Nível: <span id="playerLevel">1</span> | XP: <span id="playerXP">0</span></p>
+        <p>Dinheiro: <span id="money">300</span></p>
+        <p>Vida da Base: <span id="baseHealth">1000</span></p>
+        <p>Fase/Onda: <span id="wave">1/1</span></p>
+        <p>Inimigos Restantes: <span id="enemiesLeft">0</span></p>
+        <button onclick="pauseGame()">Pausar</button>
+    </div>
+    <div id="towerPanel">
+        <h2>Torres</h2>
+        <p>Torre Selecionada: <span id="selectedTower">Nenhuma</span></p>
+        <div id="towerButtons"></div>
+        <button onclick="sellTower()" id="sellButton" style="background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #ff4444, #cc0000); display: none;">Vender Torre (0)</button>
+        <button onclick="upgradeTower()" id="upgradeButton" style="background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #FFD700, #DAA520); display: none;">Melhorar Torre (0)</button>
+        <button onclick="startWaveNow()" id="startWaveButton" style="background: url('https://www.transparenttextures.com/patterns/metal.png'), linear-gradient(45deg, #00CED1, #008B8B); display: none;">Iniciar Agora</button>
+    </div>
+    <div id="abilityPanel">
+        <div id="abilityButtons">
+            <button onclick="useAbility('airstrike')" id="airstrikeButton" disabled>Ataque Aéreo (Cooldown: <span id="airstrikeCooldown">0</span>)</button>
+            <button onclick="useAbility('heal')" id="healButton" disabled>Cura da Base (Cooldown: <span id="healCooldown">0</span>)</button>
+        </div>
+    </div>
+    <div id="prepTimer">Preparando... 30s</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const backgroundCanvas = document.getElementById('backgroundCanvas');
+        const bgCtx = backgroundCanvas.getContext('2d');
+        const moneyDisplay = document.getElementById('money');
+        const baseHealthDisplay = document.getElementById('baseHealth');
+        const waveDisplay = document.getElementById('wave');
+        const enemiesLeftDisplay = document.getElementById('enemiesLeft');
+        const selectedTowerDisplay = document.getElementById('selectedTower');
+        const menu = document.getElementById('menu');
+        const campaignMenu = document.getElementById('campaignMenu');
+        const pauseMenu = document.getElementById('pauseMenu');
+        const phaseCompleteMenu = document.getElementById('phaseCompleteMenu');
+        const completedPhaseDisplay = document.getElementById('completedPhase');
+        const ui = document.getElementById('ui');
+        const towerPanel = document.getElementById('towerPanel');
+        const towerButtons = document.getElementById('towerButtons');
+        const prepTimerDisplay = document.getElementById('prepTimer');
+        const sellButton = document.getElementById('sellButton');
+        const upgradeButton = document.getElementById('upgradeButton');
+        const startWaveButton = document.getElementById('startWaveButton');
+        const playerLevelDisplay = document.getElementById('playerLevel');
+        const playerXPDisplay = document.getElementById('playerXP');
+        const gemsDisplay = document.getElementById('gems');
+        const crystalsDisplay = document.getElementById('crystals');
+        const airstrikeButton = document.getElementById('airstrikeButton');
+        const healButton = document.getElementById('healButton');
+        const airstrikeCooldownDisplay = document.getElementById('airstrikeCooldown');
+        const healCooldownDisplay = document.getElementById('healCooldown');
+        const tutorialOverlay = document.getElementById('tutorialOverlay');
+        const tutorialText = document.getElementById('tutorialText');
+        const tutorialArrow = document.getElementById('tutorialArrow');
+        const tooltip = document.getElementById('tooltip');
+        const abilityPanel = document.getElementById('abilityPanel');
+
+        // Variáveis do jogo
+        let money = 300, baseHealth = 1000, towers = [], enemies = [], shots = [], particles = [], wave = 1, enemiesToSpawn = 0, spawnTimer = 0, waveCooldown = 0, selectedTower = null, selectedTowerForUpgrade = null;
+        const gridSize = 40;
+        let gameMode = null;
+        let campaignLevel = 1;
+        let isPaused = false;
+        let availableTowers = [];
+        let currentPath = [];
+        const wavesPerPhase = 3;
+        let inPreparationPhase = false;
+        let prepTimeRemaining = 30 * 60;
+        let baseSpawnInterval = 120;
+        let baseEnemyHealthMultiplier = 1;
+        let baseEnemiesPerWave = 0;
+        let playerLevel = 1;
+        let playerXP = 0;
+        let gems = 100;
+        let crystals = 0;
+        let highestInfiniteWave = 0;
+        let soundEnabled = true;
+        let difficulty = 'normal';
+        let abilities = { airstrike: true, heal: false };
+        let abilityCooldowns = { airstrike: 0, heal: 0 };
+        let towerSkins = { steampunk: false };
+        let backgroundParticles = [];
+        let tutorialStep = 0;
+        let isTutorialActive = false;
+        let invalidPlacement = false;
+
+        // Configurações das fases
+        const campaignLevels = [
+            { 
+                enemies: 2,
+                types: ['weak'], 
+                health: 1000, 
+                money: 300,
+                towers: ['archer'], 
+                background: '#A9CBA4',
+                gridColor: 'rgba(0, 0, 0, 0.05)', 
+                pathColor: '#6D4C41', 
+                path: [{ x: 0, y: 320 }, { x: 800, y: 320 }],
+                story: "Bem-vindo à Vila Steampunk! Inimigos estão chegando. Use seus Arqueiros para defender o caminho!"
+            },
+            { 
+                enemies: 4, 
+                types: ['weak', 'fast'], 
+                health: 1000, 
+                money: 250, 
+                towers: ['archer', 'cannon'], 
+                background: '#6B8E23',
+                gridColor: 'rgba(0, 0, 0, 0.1)', 
+                pathColor: '#5D4037', 
+                path: [{ x: 0, y: 320 }, { x: 400, y: 320 }, { x: 400, y: 120 }, { x: 800, y: 120 }],
+                story: "A Floresta de Engrenagens está sob ataque! Use Canhões para causar mais dano."
+            },
+            { 
+                enemies: 5, 
+                types: ['weak', 'fast', 'strong'], 
+                health: 1000, 
+                money: 275, 
+                towers: ['archer', 'cannon', 'tesla'], 
+                background: '#4682B4',
+                gridColor: 'rgba(0, 0, 0, 0.15)', 
+                pathColor: '#4E342E', 
+                path: [{ x: 0, y: 320 }, { x: 240, y: 320 }, { x: 240, y: 120 }, { x: 800, y: 120 }],
+                story: "Inimigos mais fortes apareceram nas Montanhas de Vapor! Use torres Tesla para atacar em cadeia."
+            },
+            { 
+                enemies: 6, 
+                types: ['fast', 'strong', 'armored'], 
+                health: 1000, 
+                money: 300, 
+                towers: ['archer', 'cannon', 'tesla', 'ice'], 
+                background: '#FFD700',
+                gridColor: 'rgba(0, 0, 0, 0.1)', 
+                pathColor: '#6D4C41', 
+                path: [{ x: 0, y: 120 }, { x: 400, y: 120 }, { x: 400, y: 520 }, { x: 800, y: 520 }],
+                story: "O Deserto de Areia Metálica está em perigo! Use torres de Gelo para desacelerar os inimigos."
+            },
+            { 
+                enemies: 7, 
+                types: ['weak', 'fast', 'strong', 'armored'], 
+                health: 1000, 
+                money: 325, 
+                towers: ['archer', 'cannon', 'tesla', 'ice', 'fire'], 
+                background: '#FF4500',
+                gridColor: 'rgba(0, 0, 0, 0.2)', 
+                pathColor: '#5D4037', 
+                path: [{ x: 0, y: 320 }, { x: 240, y: 320 }, { x: 240, y: 120 }, { x: 440, y: 120 }, { x: 440, y: 520 }, { x: 800, y: 520 }],
+                story: "A Fábrica de Vapor Mágica está em chamas! Use torres de Fogo para queimar os inimigos."
+            },
+            { 
+                enemies: 8, 
+                types: ['fast', 'strong', 'armored', 'stealth'], 
+                health: 1000, 
+                money: 350, 
+                towers: ['archer', 'cannon', 'tesla', 'ice', 'fire'], 
+                background: '#4B0082',
+                gridColor: 'rgba(255, 255, 255, 0.1)', 
+                pathColor: '#4E342E', 
+                path: [{ x: 0, y: 520 }, { x: 400, y: 520 }, { x: 400, y: 120 }, { x: 800, y: 120 }],
+                story: "Inimigos furtivos emergiram do Pântano de Névoa! Eles ficam invisíveis por alguns segundos."
+            },
+            { 
+                enemies: 9, 
+                types: ['strong', 'armored', 'stealth', 'swarm'], 
+                health: 1000, 
+                money: 375, 
+                towers: ['archer', 'cannon', 'tesla', 'ice', 'fire', 'sniper'], 
+                background: '#8A2BE2',
+                gridColor: 'rgba(255, 255, 255, 0.15)', 
+                pathColor: '#6D4C41', 
+                path: [{ x: 0, y: 320 }, { x: 240, y: 320 }, { x: 240, y: 520 }, { x: 560, y: 520 }, { x: 560, y: 120 }, { x: 800, y: 120 }],
+                story: "Enxames de inimigos estão atacando a Floresta de Cristais! Use Snipers para eliminá-los à distância."
+            },
+            { 
+                enemies: 10, 
+                types: ['armored', 'stealth', 'swarm', 'flying'], 
+                health: 1000, 
+                money: 400, 
+                towers: ['archer', 'cannon', 'tesla', 'ice', 'fire', 'sniper'], 
+                background: '#00CED1',
+                gridColor: 'rgba(255, 255, 255, 0.2)', 
+                pathColor: '#5D4037', 
+                path: [{ x: 0, y: 120 }, { x: 240, y: 120 }, { x: 240, y: 520 }, { x: 800, y: 520 }],
+                story: "Inimigos voadores apareceram nos Céus de Aço! Apenas certas torres podem atingi-los."
+            },
+            { 
+                enemies: 11, 
+                types: ['stealth', 'swarm', 'flying', 'boss'], 
+                health: 1000, 
+                money: 425, 
+                towers: ['archer', 'cannon', 'tesla', 'ice', 'fire', 'sniper', 'laser'], 
+                background: '#DC143C',
+                gridColor: 'rgba(255, 255, 255, 0.25)', 
+                pathColor: '#4E342E', 
+                path: [{ x: 0, y: 320 }, { x: 400, y: 320 }, { x: 400, y: 120 }, { x: 560, y: 120 }, { x: 560, y: 520 }, { x: 800, y: 520 }],
+                story: "Um chefe mecânico emergiu do Inferno Mecânico! Use torres Laser para causar dano contínuo."
+            },
+            { 
+                enemies: 12, 
+                types: ['swarm', 'flying', 'boss'], 
+                health: 1000, 
+                money: 450, 
+                towers: ['archer', 'cannon', 'tesla', 'ice', 'fire', 'sniper', 'laser'], 
+                background: '#FFD700',
+                gridColor: 'rgba(255, 255, 255, 0.3)', 
+                pathColor: '#6D4C41', 
+                path: [{ x: 0, y: 520 }, { x: 240, y: 520 }, { x: 240, y: 120 }, { x: 440, y: 120 }, { x: 440, y: 320 }, { x: 800, y: 320 }],
+                story: "A batalha final no Castelo Voador! Derrote o Mestre das Engrenagens para salvar o mundo!"
+            }
+        ];
+
+        // Classe Partícula
+        class Particle {
+            constructor(x, y, color, type = 'default') {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = type === 'background' ? Math.random() * 2 + 1 : Math.random() * 5 + 2;
+                this.life = type === 'background' ? 300 : 30;
+                this.vx = (Math.random() - 0.5) * (type === 'background' ? 0.3 : 4);
+                this.vy = (Math.random() - 0.5) * (type === 'background' ? 0.3 : 4);
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                this.size *= 0.95;
+                if (this.x < 0) this.x = backgroundCanvas.width;
+                if (this.x > backgroundCanvas.width) this.x = 0;
+                if (this.y < 0) this.y = backgroundCanvas.height;
+                if (this.y > backgroundCanvas.height) this.y = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            drawBackground() {
+                bgCtx.fillStyle = this.color;
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                bgCtx.fill();
+            }
+        }
+
+        // Classe Tiro
+        class Shot {
+            constructor(x, y, targetX, targetY, damage, color) {
+                this.x = x;
+                this.y = y;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.speed = 4;
+                this.damage = damage;
+                this.color = color;
+            }
+
+            update() {
+                const dx = this.targetX - this.x;
+                const dy = this.targetY - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < this.speed) {
+                    this.x = this.targetX;
+                    this.y = this.targetY;
+                    return true;
+                }
+                this.x += (dx / dist) * this.speed;
+                this.y += (dy / dist) * this.speed;
+                return false;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Classe Torre
+        class Tower {
+            constructor(type, x, y) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.timer = 0;
+                this.angle = 0;
+                this.level = 1;
+                this.upgradeCost = 0;
+                this.animationFrame = 0;
+                this.skin = towerSkins.steampunk ? 'steampunk' : 'default';
+
+                if (type === 'archer') {
+                    this.range = 100;
+                    this.fireRate = 30;
+                    this.damage = 15;
+                    this.cost = 30;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#32CD32';
+                } else if (type === 'cannon') {
+                    this.range = 120;
+                    this.fireRate = 90;
+                    this.damage = 30;
+                    this.cost = 80;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#4682B4';
+                } else if (type === 'tesla') {
+                    this.range = 110;
+                    this.fireRate = 60;
+                    this.damage = 20;
+                    this.cost = 120;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#00CED1';
+                    this.chain = true;
+                } else if (type === 'ice') {
+                    this.range = 90;
+                    this.fireRate = 60;
+                    this.damage = 10;
+                    this.cost = 100;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#00CED1';
+                    this.slow = 0.5;
+                } else if (type === 'fire') {
+                    this.range = 80;
+                    this.fireRate = 45;
+                    this.damage = 15;
+                    this.cost = 110;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#FF4500';
+                    this.burn = 5;
+                } else if (type === 'sniper') {
+                    this.range = 150;
+                    this.fireRate = 120;
+                    this.damage = 50;
+                    this.cost = 150;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#8B4513';
+                } else if (type === 'laser') {
+                    this.range = 110;
+                    this.fireRate = 30;
+                    this.damage = 12;
+                    this.cost = 130;
+                    this.color = this.skin === 'steampunk' ? '#FFD700' : '#DC143C';
+                }
+                this.upgradeCost = this.cost * 0.5;
+            }
+
+            upgrade() {
+                this.level++;
+                this.damage *= 1.2;
+                this.range *= 1.1;
+                this.fireRate *= 0.9;
+                if (this.type === 'ice') this.slow *= 0.9;
+                if (this.type === 'fire') this.burn *= 1.2;
+                this.upgradeCost *= 1.5;
+            }
+
+            draw() {
+                this.animationFrame = (this.animationFrame + 0.1) % (Math.PI * 2);
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#4A2C2A';
+                ctx.fillRect(-5, -25, 10, 20);
+                if (this.type === 'cannon') {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(0, -20, 5 + Math.sin(this.animationFrame) * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.type === 'tesla') {
+                    ctx.strokeStyle = '#00CED1';
+                    ctx.beginPath();
+                    ctx.moveTo(-10, -20);
+                    ctx.lineTo(10, -20);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = '#FFD700';
+                ctx.font = '12px Copperplate';
+                ctx.fillText(`Lv${this.level}`, -10, 25);
+                ctx.restore();
+
+                if (this.showRange) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            shoot() {
+                this.timer++;
+                if (this.timer >= this.fireRate) {
+                    let targets = [];
+                    for (let enemy of enemies) {
+                        const dist = Math.sqrt((enemy.x - this.x) ** 2 + (enemy.y - this.y) ** 2);
+                        if (dist <= this.range && (!enemy.isFlying || this.type === 'archer' || this.type === 'sniper' || this.type === 'laser') && (!enemy.isStealth || this.type === 'tesla' || this.type === 'laser')) {
+                            targets.push(enemy);
+                            if (this.type !== 'tesla') break;
+                        }
+                    }
+                    if (targets.length > 0) {
+                        this.angle = Math.atan2(targets[0].y - this.y, targets[0].x - this.x);
+                        if (this.type === 'tesla') {
+                            targets.slice(0, 3).forEach(t => {
+                                t.hp -= this.damage;
+                                for (let i = 0; i < 5; i++) {
+                                    particles.push(new Particle(t.x, t.y, this.color));
+                                }
+                            });
+                        } else {
+                            shots.push(new Shot(this.x, this.y, targets[0].x, targets[0].y, this.damage, this.color));
+                            if (this.type === 'ice' && !targets[0].isStealth && !targets[0].isFlying) targets[0].speed *= this.slow;
+                            if (this.type === 'fire') targets[0].burn = this.burn;
+                        }
+                        this.timer = 0;
+                    }
+                }
+            }
+        }
+
+        // Classe Inimigo
+        class Enemy {
+            constructor(type, healthMultiplier) {
+                this.x = currentPath[0].x;
+                this.y = currentPath[0].y;
+                this.type = type;
+                this.pathIndex = 1;
+                this.burnTimer = 0;
+                this.burnDamage = 0;
+                this.isStealth = type === 'stealth';
+                this.isFlying = type === 'flying';
+                this.isBoss = type === 'boss';
+                this.animationFrame = 0;
+                this.stealthTimer = this.isStealth ? 180 : 0;
+                this.maxHp = 0;
+
+                if (type === 'weak') {
+                    this.hp = 30 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.3;
+                    this.reward = 20;
+                    this.color = '#F44336';
+                    this.shape = 'circle';
+                    this.damage = 5;
+                } else if (type === 'fast') {
+                    this.hp = 40 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.7;
+                    this.reward = 25;
+                    this.color = '#FFEB3B';
+                    this.shape = 'triangle';
+                    this.damage = 10;
+                } else if (type === 'strong') {
+                    this.hp = 150 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.3;
+                    this.reward = 30;
+                    this.color = '#8B0000';
+                    this.shape = 'square';
+                    this.damage = 15;
+                } else if (type === 'armored') {
+                    this.hp = 250 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.2;
+                    this.reward = 40;
+                    this.color = '#607D8B';
+                    this.shape = 'hexagon';
+                    this.damage = 20;
+                } else if (type === 'stealth') {
+                    this.hp = 100 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.5;
+                    this.reward = 35;
+                    this.color = 'rgba(128, 128, 128, 0.5)';
+                    this.shape = 'circle';
+                    this.damage = 15;
+                } else if (type === 'swarm') {
+                    this.hp = 30 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.6;
+                    this.reward = 10;
+                    this.color = '#4CAF50';
+                    this.shape = 'small-circle';
+                    this.damage = 5;
+                } else if (type === 'flying') {
+                    this.hp = 80 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.8;
+                    this.reward = 30;
+                    this.color = '#00CED1';
+                    this.shape = 'triangle';
+                    this.damage = 10;
+                } else if (type === 'boss') {
+                    this.hp = 800 * healthMultiplier;
+                    this.maxHp = this.hp;
+                    this.speed = 0.15;
+                    this.reward = 100;
+                    this.color = '#9C27B0';
+                    this.shape = 'large-square';
+                    this.damage = 50;
+                }
+                this.reward *= (1 + (campaignLevel - 1) * 0.1);
+                if (difficulty === 'hard') {
+                    this.hp *= 1.5;
+                    this.maxHp *= 1.5;
+                    this.speed *= 1.2;
+                    this.damage *= 1.5;
+                }
+            }
+
+            draw() {
+                this.animationFrame = (this.animationFrame + 0.1) % (Math.PI * 2);
+                if (this.isStealth && this.stealthTimer > 0) {
+                    ctx.globalAlpha = 0.3;
+                }
+                ctx.fillStyle = this.hp > 0 ? this.color : 'gray';
+                if (this.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + Math.sin(this.animationFrame) * 2, 12, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.shape === 'triangle') {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y - 15 + Math.sin(this.animationFrame) * 2);
+                    ctx.lineTo(this.x - 12, this.y + 10);
+                    ctx.lineTo(this.x + 12, this.y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.shape === 'square') {
+                    ctx.fillRect(this.x - 15, this.y - 15 + Math.sin(this.animationFrame) * 2, 30, 30);
+                } else if (this.shape === 'hexagon') {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + 15, this.y + Math.sin(this.animationFrame) * 2);
+                    for (let i = 1; i < 6; i++) {
+                        ctx.lineTo(this.x + 15 * Math.cos(i * Math.PI / 3), this.y + 15 * Math.sin(i * Math.PI / 3) + Math.sin(this.animationFrame) * 2);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (this.shape === 'small-circle') {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + Math.sin(this.animationFrame) * 2, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (this.shape === 'large-square') {
+                    ctx.fillRect(this.x - 20, this.y - 20 + Math.sin(this.animationFrame) * 2, 40, 40);
+                }
+
+                if (this.hp > 0) {
+                    const hpWidth = this.shape === 'large-square' ? 40 : 30;
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(this.x - hpWidth / 2, this.y - 25, hpWidth, 5);
+                    ctx.fillStyle = '#00FF00';
+                    ctx.fillRect(this.x - hpWidth / 2, this.y - 25, hpWidth * (this.hp / this.maxHp), 5);
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            move() {
+                if (this.hp <= 0) return;
+                const target = currentPath[this.pathIndex];
+                const dx = target.x - this.x;
+                const dy = target.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < this.speed) {
+                    this.x = target.x;
+                    this.y = target.y;
+                    this.pathIndex++;
+                } else {
+                    this.x += (dx / dist) * this.speed;
+                    this.y += (dy / dist) * this.speed;
+                }
+
+                if (this.burnDamage > 0) {
+                    this.burnTimer++;
+                    if (this.burnTimer % 60 === 0) {
+                        this.hp -= this.burnDamage;
+                        for (let i = 0; i < 3; i++) {
+                            particles.push(new Particle(this.x, this.y, '#FF4500'));
+                        }
+                        if (this.burnTimer >= 180) {
+                            this.burnDamage = 0;
+                            this.burnTimer = 0;
+                        }
+                    }
+                }
+
+                if (this.isStealth) {
+                    this.stealthTimer--;
+                    if (this.stealthTimer <= 0) {
+                        this.stealthTimer = 180;
+                    }
+                }
+            }
+        }
+
+        // Selecionar torre
+        function selectTower(type) {
+            selectedTower = type;
+            selectedTowerForUpgrade = null;
+            selectedTowerDisplay.textContent = type === 'archer' ? 'Arqueiro' : type === 'cannon' ? 'Canhão' : type === 'tesla' ? 'Tesla' : type === 'ice' ? 'Gelo' : type === 'fire' ? 'Fogo' : type === 'sniper' ? 'Sniper' : 'Laser';
+            sellButton.style.display = 'none';
+            upgradeButton.style.display = 'none';
+            if (isTutorialActive && tutorialStep === 0) {
+                nextTutorialStep();
+            }
+        }
+
+        // Colocar torre no grid
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            if (isTutorialActive && tutorialStep === 1) {
+                const gridX = Math.floor(x / gridSize) * gridSize + gridSize / 2;
+                const gridY = Math.floor(y / gridSize) * gridSize + gridSize / 2;
+                const tower = new Tower(selectedTower, gridX, gridY);
+                const occupied = towers.some(t => t.x === gridX && t.y === gridY);
+                if (!occupied && money >= tower.cost && !isNearPath(gridX, gridY)) {
+                    towers.push(tower);
+                    money -= tower.cost;
+                    moneyDisplay.textContent = money;
+                    selectedTower = null;
+                    selectedTowerDisplay.textContent = 'Nenhuma';
+                    nextTutorialStep();
+                }
+                return;
+            }
+
+            if (!selectedTower || gameMode === null || isPaused) {
+                selectedTowerForUpgrade = null;
+                for (let tower of towers) {
+                    const dist = Math.sqrt((tower.x - x) ** 2 + (tower.y - y) ** 2);
+                    if (dist < 20) {
+                        selectedTowerForUpgrade = tower;
+                        selectedTower = null;
+                        selectedTowerDisplay.textContent = `Selecionada: ${tower.type === 'archer' ? 'Arqueiro' : tower.type === 'cannon' ? 'Canhão' : tower.type === 'tesla' ? 'Tesla' : tower.type === 'ice' ? 'Gelo' : tower.type === 'fire' ? 'Fogo' : tower.type === 'sniper' ? 'Sniper' : 'Laser'} (Lv${tower.level})`;
+                        sellButton.style.display = 'block';
+                        sellButton.textContent = `Vender Torre (${Math.floor(tower.cost * 0.75)})`;
+                        upgradeButton.style.display = 'block';
+                        upgradeButton.textContent = `Melhorar Torre (${Math.floor(tower.upgradeCost)})`;
+                        break;
+                    }
+                }
+                if (!selectedTowerForUpgrade) {
+                    selectedTower = null;
+                    selectedTowerDisplay.textContent = 'Nenhuma';
+                    sellButton.style.display = 'none';
+                    upgradeButton.style.display = 'none';
+                }
+                return;
+            }
+
+            const gridX = Math.floor(x / gridSize) * gridSize + gridSize / 2;
+            const gridY = Math.floor(y / gridSize) * gridSize + gridSize / 2;
+            const tower = new Tower(selectedTower, gridX, gridY);
+
+            const occupied = towers.some(t => t.x === gridX && t.y === gridY);
+            if (!occupied && money >= tower.cost && !isNearPath(gridX, gridY)) {
+                towers.push(tower);
+                money -= tower.cost;
+                moneyDisplay.textContent = money;
+                selectedTower = null;
+                selectedTowerDisplay.textContent = 'Nenhuma';
+                sellButton.style.display = 'none';
+                upgradeButton.style.display = 'none';
+                if (soundEnabled) playSound('build');
+            } else {
+                invalidPlacement = true;
+                setTimeout(() => invalidPlacement = false, 500);
+            }
+        });
+
+        // Vender torre
+        function sellTower() {
+            if (selectedTowerForUpgrade) {
+                const index = towers.indexOf(selectedTowerForUpgrade);
+                if (index !== -1) {
+                    money += Math.floor(selectedTowerForUpgrade.cost * 0.75);
+                    towers.splice(index, 1);
+                    moneyDisplay.textContent = money;
+                    selectedTowerForUpgrade = null;
+                    selectedTowerDisplay.textContent = 'Nenhuma';
+                    sellButton.style.display = 'none';
+                    upgradeButton.style.display = 'none';
+                    if (soundEnabled) playSound('sell');
+                }
+            }
+        }
+
+        // Melhorar torre
+        function upgradeTower() {
+            if (selectedTowerForUpgrade && money >= selectedTowerForUpgrade.upgradeCost) {
+                money -= Math.floor(selectedTowerForUpgrade.upgradeCost);
+                selectedTowerForUpgrade.upgrade();
+                moneyDisplay.textContent = money;
+                upgradeButton.textContent = `Melhorar Torre (${Math.floor(selectedTowerForUpgrade.upgradeCost)})`;
+                if (soundEnabled) playSound('upgrade');
+            }
+        }
+
+        // Usar habilidade
+        function useAbility(type) {
+            if (abilityCooldowns[type] > 0 || crystals < 10) return;
+            if (type === 'airstrike' && abilities.airstrike) {
+                crystals -= 10;
+                crystalsDisplay.textContent = crystals;
+                enemies.forEach(enemy => {
+                    enemy.hp -= 50;
+                    for (let i = 0; i < 10; i++) {
+                        particles.push(new Particle(enemy.x, enemy.y, '#FF4444'));
+                    }
+                });
+                abilityCooldowns.airstrike = 300;
+                airstrikeButton.disabled = true;
+                if (soundEnabled) playSound('airstrike');
+            } else if (type === 'heal' && abilities.heal) {
+                crystals -= 10;
+                crystalsDisplay.textContent = crystals;
+                baseHealth = Math.min(baseHealth + 200, 1000);
+                baseHealthDisplay.textContent = baseHealth;
+                abilityCooldowns.heal = 600;
+                healButton.disabled = true;
+                if (soundEnabled) playSound('heal');
+            }
+        }
+
+        // Verificar proximidade do caminho
+        function isNearPath(x, y) {
+            if (!currentPath || currentPath.length === 0) return false;
+            for (let point of currentPath) {
+                const dist = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
+                if (dist < gridSize * 1.5) return true;
+            }
+            return false;
+        }
+
+        // Mostrar menu principal
+        function showMainMenu() {
+            gameMode = null;
+            menu.style.display = 'block';
+            campaignMenu.style.display = 'none';
+            canvas.style.display = 'none';
+            ui.style.display = 'none';
+            towerPanel.style.display = 'none';
+            pauseMenu.style.display = 'none';
+            phaseCompleteMenu.style.display = 'none';
+            prepTimerDisplay.style.display = 'none';
+            startWaveButton.style.display = 'none';
+            document.getElementById('shopMenu').style.display = 'none';
+            document.getElementById('settingsMenu').style.display = 'none';
+            abilityPanel.style.display = 'none';
+            tutorialOverlay.style.display = 'none';
+            tutorialArrow.style.display = 'none';
+            isTutorialActive = false;
+        }
+
+        // Mostrar menu da campanha
+        function showCampaignMenu() {
+            menu.style.display = 'none';
+            campaignMenu.style.display = 'block';
+        }
+
+        // Mostrar menu da loja
+        function showShopMenu() {
+            menu.style.display = 'none';
+            document.getElementById('shopMenu').style.display = 'block';
+            gemsDisplay.textContent = gems;
+            crystalsDisplay.textContent = crystals;
+        }
+
+        // Mostrar menu de configurações
+        function showSettingsMenu() {
+            menu.style.display = 'none';
+            document.getElementById('settingsMenu').style.display = 'block';
+            document.getElementById('soundStatus').textContent = soundEnabled ? 'Ligado' : 'Desligado';
+            document.getElementById('difficultyStatus').textContent = difficulty === 'normal' ? 'Normal' : 'Difícil';
+        }
+
+        // Iniciar campanha
+        function startCampaign(level) {
+            gameMode = 'campaign';
+            campaignLevel = level;
+            wave = 1;
+            money = campaignLevels[level - 1].money;
+            baseHealth = campaignLevels[level - 1].health;
+            towers = [];
+            enemies = [];
+            shots = [];
+            particles = [];
+            availableTowers = campaignLevels[level - 1].towers;
+            currentPath = campaignLevels[level - 1].path;
+            updateTowerButtons();
+            inPreparationPhase = true;
+            prepTimeRemaining = 30 * 60;
+            prepTimerDisplay.style.display = 'block';
+            startWaveButton.style.display = 'block';
+            campaignMenu.style.display = 'none';
+            canvas.style.display = 'block';
+            ui.style.display = 'flex';
+            towerPanel.style.display = 'block';
+            abilityPanel.style.display = 'block';
+            moneyDisplay.textContent = money;
+            baseHealthDisplay.textContent = baseHealth;
+            waveDisplay.textContent = `${campaignLevel}/${wave}`;
+            enemiesLeftDisplay.textContent = enemiesToSpawn;
+            playerLevelDisplay.textContent = playerLevel;
+            playerXPDisplay.textContent = playerXP;
+            alert(campaignLevels[level - 1].story);
+            if (level === 1) {
+                startTutorial();
+            }
+            gameLoop();
+        }
+
+        // Iniciar modo infinito
+        function startInfinite() {
+            gameMode = 'infinite';
+            campaignLevel = 1;
+            money = 300;
+            baseHealth = 1000;
+            wave = 1;
+            towers = [];
+            enemies = [];
+            shots = [];
+            particles = [];
+            availableTowers = ['archer', 'cannon', 'tesla', 'ice', 'fire', 'sniper', 'laser'];
+            currentPath = campaignLevels[0].path;
+            updateTowerButtons();
+            inPreparationPhase = true;
+            prepTimeRemaining = 30 * 60;
+            prepTimerDisplay.style.display = 'block';
+            startWaveButton.style.display = 'block';
+            menu.style.display = 'none';
+            canvas.style.display = 'block';
+            ui.style.display = 'flex';
+            towerPanel.style.display = 'block';
+            abilityPanel.style.display = 'block';
+            moneyDisplay.textContent = money;
+            baseHealthDisplay.textContent = baseHealth;
+            waveDisplay.textContent = wave;
+            enemiesLeftDisplay.textContent = enemiesToSpawn;
+            playerLevelDisplay.textContent = playerLevel;
+            playerXPDisplay.textContent = playerXP;
+            gameLoop();
+        }
+
+        // Iniciar tutorial
+        function startTutorial() {
+            isTutorialActive = true;
+            tutorialStep = 0;
+            tutorialOverlay.style.display = 'flex';
+            tutorialText.textContent = "Bem-vindo! Seu objetivo é impedir que os inimigos cheguem ao final do caminho.";
+            tutorialArrow.style.display = 'block';
+            tutorialArrow.style.left = '1050px';
+            tutorialArrow.style.top = '200px';
+        }
+
+        // Próximo passo do tutorial
+        function nextTutorialStep() {
+            tutorialStep++;
+            if (tutorialStep === 1) {
+                tutorialText.textContent = "Clique no botão 'Arqueiro' à direita para selecionar sua primeira torre.";
+                tutorialArrow.style.left = '1050px';
+                tutorialArrow.style.top = '200px';
+            } else if (tutorialStep === 2) {
+                tutorialText.textContent = "Agora clique no grid para colocar a torre. Evite o caminho marrom!";
+                tutorialArrow.style.left = '400px';
+                tutorialArrow.style.top = '200px';
+            } else if (tutorialStep === 3) {
+                tutorialText.textContent = "Ótimo! Agora clique em 'Iniciar Agora' para começar a onda.";
+                tutorialArrow.style.left = '1050px';
+                tutorialArrow.style.top = '400px';
+            } else if (tutorialStep === 4) {
+                tutorialOverlay.style.display = 'none';
+                tutorialArrow.style.display = 'none';
+                isTutorialActive = false;
+                showTooltip("Derrote inimigos para ganhar dinheiro e melhorar suas torres!", 300, 100, 5000);
+            }
+        }
+
+        // Atualizar botões de torres
+        function updateTowerButtons() {
+            towerButtons.innerHTML = '';
+            availableTowers.forEach(type => {
+                const button = document.createElement('button');
+                button.textContent = `${type === 'archer' ? 'Arqueiro' : type === 'cannon' ? 'Canhão' : type === 'tesla' ? 'Tesla' : type === 'ice' ? 'Gelo' : type === 'fire' ? 'Fogo' : type === 'sniper' ? 'Sniper' : 'Laser'} (${new Tower(type, 0, 0).cost})`;
+                button.onmouseover = () => showTooltip(`Dano: ${new Tower(type, 0, 0).damage}, Alcance: ${new Tower(type, 0, 0).range}`, mousePos.x + 20, mousePos.y);
+                button.onmouseout = () => hideTooltip();
+                button.onclick = () => selectTower(type);
+                towerButtons.appendChild(button);
+            });
+        }
+
+        // Iniciar onda imediatamente
+        function startWaveNow() {
+            if (isTutorialActive && tutorialStep === 3) {
+                nextTutorialStep();
+            }
+            inPreparationPhase = false;
+            prepTimeRemaining = 0;
+            prepTimerDisplay.style.display = 'none';
+            startWaveButton.style.display = 'none';
+            startWave();
+        }
+
+        // Gerenciar ondas
+        function startWave() {
+            if (gameMode === 'campaign') {
+                baseEnemiesPerWave = campaignLevels[campaignLevel - 1].enemies;
+                enemiesToSpawn = Math.floor(baseEnemiesPerWave * (1 + (wave - 1) * 0.3));
+                baseEnemyHealthMultiplier = 1 + (wave - 1) * 0.05;
+                baseSpawnInterval = 120 * Math.pow(0.9, wave - 1);
+                waveDisplay.textContent = `${campaignLevel}/${wave}`;
+            } else {
+                baseEnemiesPerWave = Math.min(wave * 3, 50);
+                enemiesToSpawn = baseEnemiesPerWave;
+                baseEnemyHealthMultiplier = 1 + (wave - 1) * 0.05;
+                baseSpawnInterval = 120 * Math.pow(0.9, wave - 1);
+                waveDisplay.textContent = wave;
+                if (wave % 5 === 0) {
+                    enemiesToSpawn += 5;
+                    baseEnemyHealthMultiplier *= 1.5;
+                    showTooltip(`Onda de Chefe! Um inimigo poderoso está chegando na onda ${wave}!`, 300, 100, 3000);
+                }
+            }
+            spawnTimer = 0;
+            waveCooldown = 600;
+            enemiesLeftDisplay.textContent = enemiesToSpawn;
+        }
+
+        // Pausar jogo
+        function pauseGame() {
+            isPaused = true;
+            pauseMenu.style.display = 'block';
+        }
+
+        // Continuar jogo
+        function resumeGame() {
+            isPaused = false;
+            pauseMenu.style.display = 'none';
+            gameLoop();
+        }
+
+        // Resetar para o menu
+        function resetToMenu() {
+            gameMode = null;
+            isPaused = false;
+            menu.style.display = 'block';
+            canvas.style.display = 'none';
+            ui.style.display = 'none';
+            towerPanel.style.display = 'none';
+            pauseMenu.style.display = 'none';
+            phaseCompleteMenu.style.display = 'none';
+            prepTimerDisplay.style.display = 'none';
+            startWaveButton.style.display = 'none';
+            abilityPanel.style.display = 'none';
+            tutorialOverlay.style.display = 'none';
+            tutorialArrow.style.display = 'none';
+            isTutorialActive = false;
+        }
+
+        // Ir para a próxima fase
+        function goToNextPhase() {
+            if (campaignLevel < campaignLevels.length) {
+                campaignLevel++;
+                startCampaign(campaignLevel);
+                phaseCompleteMenu.style.display = 'none';
+            } else {
+                alert('Parabéns! Você derrotou o Mestre das Engrenagens e salvou o mundo!');
+                resetToMenu();
+            }
+        }
+
+        // Mostrar popup de fase concluída
+        function showPhaseCompleteMenu() {
+            isPaused = true;
+            completedPhaseDisplay.textContent = campaignLevel;
+            phaseCompleteMenu.style.display = 'block';
+        }
+
+        // Comprar gemas
+        function buyGems() {
+            gems += 10;
+            gemsDisplay.textContent = gems;
+            alert('Gemas compradas com sucesso! (Simulação de compra)');
+        }
+
+        // Comprar skin de torre
+        function buyTowerSkin(skin) {
+            if (gems >= 50) {
+                gems -= 50;
+                towerSkins[skin] = true;
+                gemsDisplay.textContent = gems;
+                alert(`Skin ${skin === 'steampunk' ? 'Steampunk' : ''} desbloqueada!`);
+            } else {
+                alert('Gemas insuficientes!');
+            }
+        }
+
+        // Comprar habilidade
+        function buyAbility(ability) {
+            if (gems >= 100) {
+                gems -= 100;
+                abilities[ability] = true;
+                gemsDisplay.textContent = gems;
+                alert(`Habilidade ${ability === 'heal' ? 'Cura da Base' : ''} desbloqueada!`);
+            } else {
+                alert('Gemas insuficientes!');
+            }
+        }
+
+        // Alternar som
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundStatus').textContent = soundEnabled ? 'Ligado' : 'Desligado';
+        }
+
+        // Alternar dificuldade
+        function toggleDifficulty() {
+            difficulty = difficulty === 'normal' ? 'hard' : 'normal';
+            document.getElementById('difficultyStatus').textContent = difficulty === 'normal' ? 'Normal' : 'Difícil';
+        }
+
+        // Simulação de som
+        function playSound(type) {
+            console.log(`Tocar som: ${type}`);
+        }
+
+        // Mostrar tooltip
+        function showTooltip(text, x, y, duration = 0) {
+            tooltip.textContent = text;
+            tooltip.style.left = `${x}px`;
+            tooltip.style.top = `${y}px`;
+            tooltip.style.display = 'block';
+            if (duration > 0) {
+                setTimeout(() => tooltip.style.display = 'none', duration);
+            }
+        }
+
+        // Esconder tooltip
+        function hideTooltip() {
+            tooltip.style.display = 'none';
+        }
+
+        // Desenhar grid
+        function drawGrid() {
+            if (!campaignLevels[campaignLevel - 1]) return;
+            ctx.strokeStyle = campaignLevels[campaignLevel - 1].gridColor;
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                for (let y = 0; y < canvas.height; y += gridSize) {
+                    ctx.strokeRect(x, y, gridSize, gridSize);
+                    ctx.fillStyle = 'rgba(200, 255, 200, 0.1)';
+                    ctx.fillRect(x, y, gridSize, gridSize);
+                }
+            }
+        }
+
+        // Função principal do jogo
+        function gameLoop() {
+            if (gameMode === null || isPaused) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            // Atualizar fundo animado
+            bgCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
+            if (Math.random() < 0.05) {
+                backgroundParticles.push(new Particle(Math.random() * backgroundCanvas.width, Math.random() * backgroundCanvas.height, 'rgba(255, 255, 255, 0.3)', 'background'));
+            }
+            for (let i = backgroundParticles.length - 1; i >= 0; i--) {
+                const particle = backgroundParticles[i];
+                particle.update();
+                particle.drawBackground();
+                if (particle.life <= 0) {
+                    backgroundParticles.splice(i, 1);
+                }
+            }
+
+            // Limpar o canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Desenhar fundo
+            if (campaignLevels[campaignLevel - 1]) {
+                ctx.fillStyle = campaignLevels[campaignLevel - 1].background;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Desenhar grid
+            drawGrid();
+
+            // Desenhar caminho
+            if (currentPath && currentPath.length > 0) {
+                ctx.strokeStyle = campaignLevels[campaignLevel - 1].pathColor;
+                ctx.lineWidth = 20;
+                ctx.beginPath();
+                ctx.moveTo(currentPath[0].x, currentPath[0].y);
+                for (let i = 1; i < currentPath.length; i++) {
+                    ctx.lineTo(currentPath[i].x, currentPath[i].y);
+                }
+                ctx.stroke();
+            }
+
+            // Modo de preparação
+            if (inPreparationPhase) {
+                prepTimeRemaining--;
+                prepTimerDisplay.textContent = `Preparando... ${Math.ceil(prepTimeRemaining / 60)}s`;
+                if (prepTimeRemaining <= 0) {
+                    inPreparationPhase = false;
+                    prepTimerDisplay.style.display = 'none';
+                    startWaveButton.style.display = 'none';
+                    startWave();
+                }
+            }
+
+            // Gerenciar ondas
+            if (!inPreparationPhase) {
+                if (enemiesToSpawn > 0 && enemies.length < 15) {
+                    spawnTimer++;
+                    if (spawnTimer >= baseSpawnInterval) {
+                        const types = gameMode === 'campaign' ? campaignLevels[campaignLevel - 1].types : ['weak', 'fast', 'strong', 'armored', 'stealth', 'swarm', 'flying', 'boss'];
+                        const type = (gameMode === 'infinite' && wave % 5 === 0) ? 'boss' : types[Math.floor(Math.random() * types.length)];
+                        enemies.push(new Enemy(type, baseEnemyHealthMultiplier));
+                        enemiesToSpawn--;
+                        spawnTimer = 0;
+                        enemiesLeftDisplay.textContent = enemiesToSpawn;
+                    }
+                } else if (enemies.length === 0 && enemiesToSpawn === 0 && waveCooldown <= 0) {
+                    const perfectWaveBonus = baseHealth === campaignLevels[campaignLevel - 1].health ? 50 : 0;
+                    if (perfectWaveBonus > 0) {
+                        money += perfectWaveBonus;
+                        moneyDisplay.textContent = money;
+                        showTooltip('Bônus de Onda Perfeita: +50!', 300, 100, 2000);
+                    }
+                    if (gameMode === 'campaign' && wave < wavesPerPhase) {
+                        wave++;
+                        inPreparationPhase = true;
+                        prepTimeRemaining = 30 * 60;
+                        prepTimerDisplay.style.display = 'block';
+                        startWaveButton.style.display = 'block';
+                    } else if (gameMode === 'campaign' && wave === wavesPerPhase) {
+                        showPhaseCompleteMenu();
+                        return;
+                    } else if (gameMode === 'infinite') {
+                        wave++;
+                        if (wave > highestInfiniteWave) {
+                            highestInfiniteWave = wave;
+                            if (wave % 10 === 0) {
+                                gems += 50;
+                                showTooltip(`Parabéns! Você alcançou a onda ${wave} e ganhou 50 gemas!`, 300, 100, 3000);
+                            }
+                        }
+                        inPreparationPhase = true;
+                        prepTimeRemaining = 30 * 60;
+                        prepTimerDisplay.style.display = 'block';
+                        startWaveButton.style.display = 'block';
+                    }
+                }
+                waveCooldown--;
+            }
+
+            // Atualizar e desenhar torres
+            for (let tower of towers) {
+                tower.showRange = mouseOverTower(tower);
+                tower.draw();
+                if (!inPreparationPhase) tower.shoot();
+            }
+
+            // Atualizar e desenhar tiros
+            for (let i = shots.length - 1; i >= 0; i--) {
+                const shot = shots[i];
+                if (shot.update()) {
+                    for (let enemy of enemies) {
+                        if (Math.sqrt((enemy.x - shot.x) ** 2 + (enemy.y - shot.y) ** 2) < 15) {
+                            enemy.hp -= shot.damage;
+                            if (enemy.hp <= 0) {
+                                money += enemy.reward;
+                                crystals += Math.floor(enemy.reward / 10);
+                                playerXP += enemy.reward;
+                                moneyDisplay.textContent = money;
+                                crystalsDisplay.textContent = crystals;
+                                playerXPDisplay.textContent = playerXP;
+                                if (playerXP >= playerLevel * 100) {
+                                    playerLevel++;
+                                    playerXP = 0;
+                                    playerLevelDisplay.textContent = playerLevel;
+                                    playerXPDisplay.textContent = playerXP;
+                                    showTooltip(`Parabéns! Você subiu para o nível ${playerLevel}!`, 300, 100, 3000);
+                                }
+                                for (let j = 0; j < 5; j++) {
+                                    particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                                }
+                                enemies.splice(enemies.indexOf(enemy), 1);
+                                break;
+                            }
+                        }
+                    }
+                    shots.splice(i, 1);
+                } else {
+                    shot.draw();
+                }
+            }
+
+            // Atualizar e desenhar inimigos
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                enemy.move();
+                enemy.draw();
+
+                if (enemy.hp <= 0) {
+                    money += enemy.reward;
+                    crystals += Math.floor(enemy.reward / 10);
+                    playerXP += enemy.reward;
+                    moneyDisplay.textContent = money;
+                    crystalsDisplay.textContent = crystals;
+                    playerXPDisplay.textContent = playerXP;
+                    if (playerXP >= playerLevel * 100) {
+                        playerLevel++;
+                        playerXP = 0;
+                        playerLevelDisplay.textContent = playerLevel;
+                        playerXPDisplay.textContent = playerXP;
+                        showTooltip(`Parabéns! Você subiu para o nível ${playerLevel}!`, 300, 100, 3000);
+                    }
+                    for (let j = 0; j < 5; j++) {
+                        particles.push(new Particle(enemy.x, enemy.y, enemy.color));
+                    }
+                    enemies.splice(i, 1);
+                    continue;
+                }
+
+                if (enemy.pathIndex >= currentPath.length) {
+                    baseHealth -= enemy.damage;
+                    baseHealthDisplay.textContent = baseHealth;
+                    enemies.splice(i, 1);
+                    if (baseHealth <= 0) {
+                        alert('Game Over! A base foi destruída.');
+                        resetToMenu();
+                        return;
+                    }
+                }
+            }
+
+            // Atualizar e desenhar partículas
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const particle = particles[i];
+                particle.update();
+                particle.draw();
+                if (particle.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Atualizar cooldowns de habilidades
+            for (let ability in abilityCooldowns) {
+                if (abilityCooldowns[ability] > 0) {
+                    abilityCooldowns[ability]--;
+                    if (ability === 'airstrike') {
+                        airstrikeCooldownDisplay.textContent = Math.ceil(abilityCooldowns[ability] / 60);
+                        if (abilityCooldowns[ability] <= 0) airstrikeButton.disabled = false;
+                    } else if (ability === 'heal') {
+                        healCooldownDisplay.textContent = Math.ceil(abilityCooldowns[ability] / 60);
+                        if (abilityCooldowns[ability] <= 0) healButton.disabled = false;
+                    }
+                }
+            }
+
+            // Desenhar feedback de colocação inválida
+            if (invalidPlacement) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.beginPath();
+                ctx.arc(mousePos.x, mousePos.y, 20, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Desenhar alcance da torre selecionada para colocação
+            if (selectedTower && !isPaused) {
+                const gridX = Math.floor(mousePos.x / gridSize) * gridSize + gridSize / 2;
+                const gridY = Math.floor(mousePos.y / gridSize) * gridSize + gridSize / 2;
+                const tempTower = new Tower(selectedTower, gridX, gridY);
+                ctx.strokeStyle = isNearPath(gridX, gridY) || towers.some(t => t.x === gridX && t.y === gridY) ? 'rgba(255, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(gridX, gridY, tempTower.range, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Verificar se o mouse está sobre uma torre
+        let mousePos = { x: 0, y: 0 };
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+        });
+
+        function mouseOverTower(tower) {
+            const dist = Math.sqrt((tower.x - mousePos.x) ** 2 + (tower.y - mousePos.y) ** 2);
+            return dist < 20;
+        }
+
+        // Iniciar o loop do jogo
+        gameLoop();
+    </script>
+</body>
+</html>
