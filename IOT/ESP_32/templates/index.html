@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Temperatura e Umidade ESP32</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 500px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+        }
+        p {
+            font-size: 16px;
+            color: #555;
+        }
+        .led {
+            width: 50px;
+            height: 50px;
+            background-color: grey;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 20px;
+        }
+        .led.on {
+            background-color: red;
+        }
+        .slider-container {
+            margin: 20px 0;
+            text-align: left;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .slider-label {
+            font-size: 16px;
+            color: #333;
+            display: inline-block;
+            width: 100px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 200px;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+            margin: 0 10px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #007bff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .slider-value {
+            font-size: 16px;
+            color: #007bff;
+            display: inline-block;
+            width: 60px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Controle de Temperatura e Umidade ESP32</h1>
+        <p>Temperatura: <span id="temperature">0.0</span> °C</p>
+        <p>Umidade: <span id="humidity">0.0</span> %</p>
+        <p>Status do LED: <span id="led-status">Desligado</span></p>
+        <div id="led" class="led"></div>
+
+        <h2>Simular Valores</h2>
+        <label for="simulate">Ativar Simulação:</label>
+        <input type="checkbox" id="simulate" onchange="toggleSimulation()">
+        <br><br>
+
+        <div class="slider-container">
+            <span class="slider-label">Temperatura:</span>
+            <input type="range" id="temp-slider" min="-10" max="50" value="25" step="0.1" oninput="updateValues()">
+            <span id="temp-value" class="slider-value">25.0 °C</span>
+        </div>
+
+        <div class="slider-container">
+            <span class="slider-label">Umidade:</span>
+            <input type="range" id="hum-slider" min="0" max="100" value="50" step="0.1" oninput="updateValues()">
+            <span id="hum-value" class="slider-value">50.0 %</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        socket.on('update_data', function(data) {
+            document.getElementById('temperature').innerText = data.temperature.toFixed(1);
+            document.getElementById('humidity').innerText = data.humidity.toFixed(1);
+            const led = document.getElementById('led');
+            const ledStatus = document.getElementById('led-status');
+            if (data.temperature >= 33) {
+                led.classList.add('on');
+                ledStatus.innerText = 'Piscando';
+            } else {
+                led.classList.remove('on');
+                ledStatus.innerText = 'Desligado';
+            }
+        });
+
+        function updateValues() {
+            const tempSlider = document.getElementById('temp-slider');
+            const humSlider = document.getElementById('hum-slider');
+            const tempValue = document.getElementById('temp-value');
+            const humValue = document.getElementById('hum-value');
+
+            tempValue.innerText = tempSlider.value + ' °C';
+            humValue.innerText = humSlider.value + ' %';
+
+            if (document.getElementById('simulate').checked) {
+                fetch('/set_simulation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        temperature: tempSlider.value,
+                        humidity: humSlider.value,
+                        simulate: true
+                    })
+                });
+            }
+        }
+
+        function toggleSimulation() {
+            const simulate = document.getElementById('simulate').checked;
+            fetch('/set_simulation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    temperature: document.getElementById('temp-slider').value,
+                    humidity: document.getElementById('hum-slider').value,
+                    simulate: simulate
+                })
+            });
+        }
+    </script>
+</body>
+</html>
